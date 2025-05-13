@@ -5,7 +5,7 @@ from discord.ext import commands
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# تشغيل سيرفر وهمي حتى يتجنب Render مشكلة Port Scan Timeout
+# تشغيل سيرفر وهمي لتفادي Port Scan Timeout في Render
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -18,15 +18,18 @@ def run_fake_web_server():
 
 threading.Thread(target=run_fake_web_server).start()
 
-# تحميل المتغيرات من ملف .env
+# تحميل المتغيرات من .env
 load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# أيدي الملكين الذين يمكنهم تغيير اسم وصورة البوت
+# أيدي المالكين
 KING_IDS = ["361039024288432138", "691265105878319195"]
+
+# روم صوتي مخصص يدخل فيه البوت دائماً
+VC_CHANNEL_ID = 1256765406069391400  # ← حط هنا ID الروم الصوتي
 
 @bot.event
 async def on_ready():
@@ -34,12 +37,12 @@ async def on_ready():
 
 @bot.command()
 async def join(ctx):
-    if ctx.author.voice:
-        channel = ctx.author.voice.channel
+    channel = bot.get_channel(VC_CHANNEL_ID)
+    if channel and isinstance(channel, discord.VoiceChannel):
         await channel.connect()
-        await ctx.send(f"🎶 Joined {channel}")
+        await ctx.send(f"🎶 Joined {channel.name}")
     else:
-        await ctx.send("❌ لازم تكون في روم صوتي")
+        await ctx.send("❌ ما قدرت ألقى الروم الصوتي المحدد")
 
 @bot.command()
 async def leave(ctx):
@@ -65,5 +68,5 @@ async def set_avatar(ctx):
     else:
         await ctx.send("❌ فقط الملكين يمكنهم تغيير صورة البوت")
 
-# تشغيل البوت باستخدام التوكن من ملف .env
+# تشغيل البوت باستخدام التوكن
 bot.run(os.getenv("DISCORD_TOKEN"))
